@@ -5,32 +5,42 @@ const adSchema = require('./models/AdSchema')
 const redCmdColor = '\x1b[31m'
 const greenCmdColor = '\x1b[32m'
 const DB_URI = require('./config/keys').mongoURI;
-const CollectionUrl = 'https://www.blocket.se/annonser/blekinge/fordon/motorcyklar?cg=1140&r=9';
+//url to collect ads from.
+const CollectionUrl = 'https://www.blocket.se/annonser/hela_sverige/fordon/motorcyklar/touring?cg=1146&page=2';
 
+//connect to database
 mongoose.connect(DB_URI, (err) => {
   if (err) console.log(redCmdColor, 'Connection to db failed ' + err);
   console.log(greenCmdColor, 'connected to db!')
 });
+
+//run the scraper, and again every ... ms.
 scrape();
 setInterval(() => { scrape() }, 60000);
 
 function scrape() {
-  console.log('kör scrape()');
+  console.log('Scraping url for new motorcycles...');
   request(CollectionUrl, (err, res, html) => {
     if (!err && res.statusCode == 200) {
       const $ = cheerio.load(html);
 
-      for (let i = 0; i < 3; i++) {
+      // Scrapes the first 10 new ads, to not overpopulate the db..
+      for (let i = 0; i < 10; i++) {
         const article = $('article').get(i);
-
         const title = $(article).find('h2').text();
         let url = $(article).find('h2').find('a').attr('href');
         url = `http://blocket.se${url}`
         const thumbnail = $(article).find('img').attr('src');
+
+        //runs scrapeInfo() and its callback to go one layer deeper to scrape the ad-description and the price.
         scrapeInfo(url, (info) => {
           console.log(info.price)
           if (!title == '') {
-            checkAndAdd(info.price, info.desc, title, url, thumbnail, sliceUrl(thumbnail))
+            //slices the scraped price to get rid of the 'kr' ending.
+            let slicedPrice = info.price.slice(0, info.price.length - 2);
+            slicedPrice = slicedPrice.replace(/\s+/g, '');
+            slicedPrice = Number(slicedPrice);
+            checkAndAdd(slicedPrice, info.desc, title, url, thumbnail, sliceUrl(thumbnail))
           } else {
             return
           }
@@ -46,6 +56,7 @@ function checkAndAdd(price, desc, title, url, thumbnail, img) {
   Ad.findOne({ 'title': title }, function (err, ad) {
     if (ad === null) {
       const adToAdd = new Ad({
+        owner: 'admin',
         title,
         url,
         thumbnail,

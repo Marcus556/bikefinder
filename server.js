@@ -1,5 +1,4 @@
 require('dotenv').config();
-
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -7,16 +6,18 @@ const cors = require('cors');
 const db = require('./config/keys').mongoURI;
 const port = process.env.PORT || 5000;
 const jwt = require('jsonwebtoken');
-
 const ads = require('./routes/api/ads')
 const users = require('./routes/users')
 
 const app = express();
 app.use(cors());
+//Make upload-folder static and accessable
+app.use('/uploads', express.static('uploads'))
 
 //body-parsers middleware
 app.use(bodyParser.json());
 
+//connect to db
 mongoose
   .connect(db)
   .then(() => console.log('Connected to the DB..'))
@@ -26,21 +27,6 @@ mongoose
 app.use('/users', users)
 app.use('/api/ads', authenticateJwtToken, ads);
 
-// Temp practise jwt route
-
-const posts = [
-  {
-    username: 'nisse',
-    title: 'title 1'
-  },
-  {
-    username: 'nisse',
-    title: 'title 1'
-  }
-]
-app.get('/posts', authenticateJwtToken, (req, res) => {
-  res.json(posts)
-})
 
 //create a jwt-token and send back to the client
 app.post('/postlogin', (req, res) => {

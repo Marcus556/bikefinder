@@ -7,8 +7,9 @@ const AdSchema = new Schema({
   url: String,
   thumbnail: String,
   img: String,
-  price: String,
+  price: Number,
   desc: String,
+  createdOn: { type: Date, default: Date.now }
 })
 
 module.exports = Ad = mongoose.model('Ad', AdSchema);
