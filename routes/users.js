@@ -9,19 +9,45 @@ const jwt = require('jsonwebtoken');
 //model
 const User = require('../models/UserSchema');
 
-router.get('/', (req, res) => {
+router.post('/messages', authenticateJwtToken, (req, res) => {
+  User.findOne({
+    username: req.body.recipient
+  }, async function (err, user) {
+    if (user === null) {
+      console.log('no such user')
+      res.send('no such user')
+      return
+    }
+    if (user) {
+      console.log('user exist!')
+      const message = {
+        id: Math.random().toString(36).substring(7),
+        recipient: req.body.recipient,
+        from: req.user.name,
+        title: req.body.title,
+        message: req.body.message,
+      }
+      user.messages.push(message)
+      user.save()
+      res.json({
+        message
+      })
+    } else {
+      console.log('error')
+      res.send('error')
+    }
+  })
+})
+
+router.get('/messages', authenticateJwtToken, (req, res) => {
   let query;
-  if (req.query.name) {
-    query = User.findOne({
-      'username': req.query.name
-    })
-  } else {
-    query = User.find();
-  }
+  query = User.find();
   query.exec()
-    .then(users => res.send(users))
+    .then(users => users.filter(user => user.username === req.user.name)[0])
+    .then(user => res.json(user.messages))
     .catch(err => console.log(err))
 });
+
 
 router.post('/', async (req, res) => {
   try {
@@ -30,7 +56,6 @@ router.post('/', async (req, res) => {
     const newUser = new User({
       username: req.body.username,
       password: hashedPassword,
-      admin: req.body.admin
     });
     newUser.save()
       .then(user => res.json(user));
@@ -63,6 +88,19 @@ router.post('/login', (req, res) => {
     }
   })
 })
+function authenticateJwtToken(req, res, next) {
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
+
+  if (token == null) return res.sendStatus(401)
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403)
+    req.user = user
+    next()
+  })
+}
+
 
 
 module.exports = router;

@@ -28,6 +28,9 @@ app.use('/users', users)
 app.use('/api/ads', authenticateJwtToken, ads);
 
 
+
+
+
 //create a jwt-token and send back to the client
 app.post('/postlogin', (req, res) => {
   const username = req.body.username
@@ -36,6 +39,7 @@ app.post('/postlogin', (req, res) => {
   const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
   res.json({ accessToken: accessToken })
 })
+
 // auth the users jwt token. If the req-headers auth baerer token = null, return 401, else next(continue from middleware)
 function authenticateJwtToken(req, res, next) {
   const authHeader = req.headers['authorization']
@@ -49,6 +53,7 @@ function authenticateJwtToken(req, res, next) {
     next()
   })
 }
+
 
 
 
