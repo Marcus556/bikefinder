@@ -52,6 +52,13 @@ router.get('/owned', (req, res) => {
     .then(ads => res.send(ads.filter(ad => ad.owner === req.user.name)))
     .catch(err => console.log(err))
 });
+router.delete('/:id', (req, res) => {
+  Ad.findById(req.params.id)
+    .then(ad => ad.remove().then(() => res.status(200).json({ successfullyDeleted: true })))
+    .catch(err => res.status(204).json({ successfullyDeleted: false }))
+})
+
+
 
 router.get('/:id', function (req, res, next) {
   var id = req.params.id

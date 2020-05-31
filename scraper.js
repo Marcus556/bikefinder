@@ -6,7 +6,7 @@ const redCmdColor = '\x1b[31m'
 const greenCmdColor = '\x1b[32m'
 const DB_URI = require('./config/keys').mongoURI;
 //url to collect ads from.
-const CollectionUrl = 'https://www.blocket.se/annonser/hela_sverige/fordon/motorcyklar/touring?cg=1146&page=2';
+const CollectionUrl = 'https://www.blocket.se/annonser/hela_sverige/fordon/motorcyklar/touring?cg=1146&page=6';
 
 //connect to database
 mongoose.connect(DB_URI, (err) => {

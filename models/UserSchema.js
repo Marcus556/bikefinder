@@ -6,6 +6,7 @@ const UserSchema = new Schema({
   password: String,
   messages: Array,
   admin: Boolean,
+  newMessages: Boolean,
 })
 
 module.exports = User = mongoose.model('User', UserSchema);

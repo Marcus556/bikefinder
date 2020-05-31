@@ -28,6 +28,7 @@ router.post('/messages', authenticateJwtToken, (req, res) => {
         message: req.body.message,
       }
       user.messages.push(message)
+      user.newMessages = true
       user.save()
       res.json({
         message
@@ -39,6 +40,14 @@ router.post('/messages', authenticateJwtToken, (req, res) => {
   })
 })
 
+
+
+
+
+
+
+
+
 router.get('/messages', authenticateJwtToken, (req, res) => {
   let query;
   query = User.find();
@@ -46,7 +55,28 @@ router.get('/messages', authenticateJwtToken, (req, res) => {
     .then(users => users.filter(user => user.username === req.user.name)[0])
     .then(user => res.json(user.messages))
     .catch(err => console.log(err))
+  User.findOne({
+    username: req.user.name
+  }, (err, user) => {
+    user.newMessages = false
+    user.save()
+  })
 });
+
+router.delete('/messages/:id', authenticateJwtToken, function (req, res, next) {
+  User.findOne({
+    username: req.user.name
+  }, async function (err, user) {
+    user.update({ messagesid: req.params.id }, function (err) {
+      if (err) return handleError(err);
+      // deleted at most one tank document
+    });
+  })
+});
+
+
+
+
 
 
 router.post('/', async (req, res) => {
@@ -63,6 +93,18 @@ router.post('/', async (req, res) => {
     res.status(500).send()
   }
 });
+
+router.get('/user', authenticateJwtToken, (req, res) => {
+  let query;
+  query = User.find();
+  query.exec()
+    .then(users => users.filter(user => user.username === req.user.name)[0])
+    .then(user => res.json({ username: user.username, newMessages: user.newMessages }))
+    .catch(err => console.log(err))
+});
+
+
+
 
 router.post('/login', (req, res) => {
   User.findOne({
@@ -81,7 +123,9 @@ router.post('/login', (req, res) => {
       const user = { name: username }
 
       const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
-      res.json({ accessToken: accessToken })
+      user.name === 'admin' ? res.json({ accessToken: accessToken, admin: true }) : res.json({ accessToken: accessToken })
+
+
     } else {
       console.log('Wrong password')
       res.send('Wrong password')
