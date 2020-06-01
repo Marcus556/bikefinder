@@ -40,7 +40,26 @@ router.post('/messages', authenticateJwtToken, (req, res) => {
   })
 })
 
+router.get('/test', authenticateJwtToken, (req, res) => {
+  if (req.user.name === 'admin') {
+    res.send('du är admin')
+  }
+  else {
+    res.send('inte admin')
+  }
 
+});
+
+router.delete('/messages/:id', authenticateJwtToken, function (req, res, next) {
+  User.findOne({
+    username: req.user.name
+  }, async function (err, user) {
+    user.update({ messagesid: req.params.id }, function (err) {
+      if (err) return handleError(err);
+      // deleted at most one tank document
+    });
+  })
+});
 
 
 
